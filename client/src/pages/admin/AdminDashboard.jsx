@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto p-6 space-y-6">
-        <div>
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
           <p className="text-gray-500 text-sm mt-1">
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
