@@ -1,100 +1,105 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeSlash, EnvelopeSimple, LockSimple, UserCircle } from "phosphor-react";
-import { login } from "../../api/services/authServices";
+
+// ─── Mock user database ───────────────────────────────────────────────────────
+// Replace with real API call when backend is ready:
+//   const res = await login({ email, password });
+//   const role = res.role;  ← comes from backend
+const MOCK_USERS: Record<string, { role: string; name: string; password: string }> = {
+  "admin@skaviyo.com":       { role: "ADMIN",    name: "Super Admin",   password: "admin123" },
+  "admin2@skaviyo.com":      { role: "ADMIN",    name: "Admin Two",     password: "admin123" },
+  "vendor@skaviyo.com":      { role: "VENDOR",   name: "Rajesh Kumar",  password: "vendor123" },
+  "vendor2@skaviyo.com":     { role: "VENDOR",   name: "Anita Sharma",  password: "vendor123" },
+  "customer@skaviyo.com":    { role: "CUSTOMER", name: "Sarah Anderson",password: "user123" },
+  "user@skaviyo.com":        { role: "CUSTOMER", name: "Raj Patel",     password: "user123" },
+};
+
+const ROLE_HOME: Record<string, string> = {
+  ADMIN:    "/admin",
+  VENDOR:   "/vendor",
+  CUSTOMER: "/shop",
+};
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [role, setRole] = useState<string>("CUSTOMER");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [email, setEmail]               = useState("");
+  const [password, setPassword]         = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
-      console.log("Logging in with:", { email, password, role });
-      const data = await login({ email, password, role });
-      console.log("Logged in:", data);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", role);
-      if (role === "ADMIN") {
-        navigate("/admin");
-      } else {
-        navigate("/vendor-dashboard");
+      // Simulate network delay
+      await new Promise((res) => setTimeout(res, 800));
+
+      // ── Lookup email in mock DB (swap with real API later) ──
+      const userEntry = MOCK_USERS[email.toLowerCase().trim()];
+
+      if (!userEntry) {
+        setError("No account found with this email address.");
+        return;
       }
-    } catch (error) {
-      console.error("Login failed", error);
-      setError("Login failed. Please check your credentials.");
+
+      if (userEntry.password !== password) {
+        setError("Incorrect password. Please try again.");
+        return;
+      }
+
+      // ── Auth success: store session & redirect by role ──
+      localStorage.setItem("role", userEntry.role);
+      localStorage.setItem("user", JSON.stringify({ email, name: userEntry.name, role: userEntry.role }));
+
+      navigate(ROLE_HOME[userEntry.role]);
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
+  const container = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
   };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring" as const, stiffness: 100, damping: 10 },
-    },
+  const item = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 120 } },
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative background blobs */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      {/* Background blobs */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
+      <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000" />
 
       <style>{`
         @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          0%,100%{transform:translate(0,0) scale(1);}
+          33%{transform:translate(30px,-50px) scale(1.1);}
+          66%{transform:translate(-20px,20px) scale(0.9);}
         }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .glass-effect {
-          background: rgba(255, 255, 255, 0.5);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.6);
-        }
-        .glass-effect:hover {
-          background: rgba(255, 255, 255, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+        .animate-blob{animation:blob 7s infinite;}
+        .animation-delay-2000{animation-delay:2s;}
+        .animation-delay-4000{animation-delay:4s;}
+        .glass{
+          background:rgba(255,255,255,0.52);
+          backdrop-filter:blur(14px);
+          -webkit-backdrop-filter:blur(14px);
+          border:1px solid rgba(255,255,255,0.65);
         }
       `}</style>
 
-      {/* Main container */}
       <div className="w-full max-w-5xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Left side - Branding */}
+
+          {/* ── Left: Branding ── */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -111,187 +116,141 @@ const LoginPage = () => {
               </div>
             </motion.div>
 
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-900 via-green-800 to-teal-800 bg-clip-text text-transparent mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-900 via-green-800 to-teal-800 bg-clip-text text-transparent mb-3">
               Skaviyo
             </h1>
-            <p className="text-xl text-gray-700 font-semibold mb-2">
-              Premium E-Commerce Platform
-            </p>
-            <p className="text-gray-600 text-lg leading-relaxed mb-8">
-              Manage your business efficiently with our powerful admin dashboard. Real-time analytics, inventory management, and seamless order processing all in one place.
+            <p className="text-xl text-gray-700 font-semibold mb-2">Premium E-Commerce Platform</p>
+            <p className="text-gray-600 leading-relaxed mb-8">
+              One secure login for every role. Your dashboard is automatically determined by your account — no manual selection needed.
             </p>
 
-            {/* Features list */}
-            <div className="space-y-4">
+            {/* Role info cards */}
+            <div className="space-y-3">
               {[
-                { icon: "📊", text: "Real-time Analytics & Reports" },
-                { icon: "🛒", text: "Complete Order Management" },
-                { icon: "👥", text: "User & Vendor Management" },
-                { icon: "📦", text: "Inventory Tracking" },
-              ].map((feature, idx) => (
+                { icon: "👑", role: "Admin",    desc: "Full platform control & analytics" },
+                { icon: "🏪", role: "Vendor",   desc: "Manage your store & track earnings" },
+                { icon: "🛍️", role: "Customer", desc: "Shop the finest collections" },
+              ].map((r, i) => (
                 <motion.div
-                  key={idx}
+                  key={i}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + idx * 0.1 }}
-                  className="flex items-center gap-3"
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                  className="flex items-center gap-3 bg-white/40 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/60"
                 >
-                  <span className="text-2xl">{feature.icon}</span>
-                  <span className="text-gray-700 font-medium">{feature.text}</span>
+                  <span className="text-2xl">{r.icon}</span>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">{r.role}</p>
+                    <p className="text-xs text-gray-500">{r.desc}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
-          {/* Right side - Login form */}
+          {/* ── Right: Login form ── */}
           <motion.div
-            variants={containerVariants}
+            variants={container}
             initial="hidden"
             animate="visible"
-            className="glass-effect rounded-3xl p-8 lg:p-10 shadow-2xl"
+            className="glass rounded-3xl p-8 lg:p-10 shadow-2xl"
           >
-            {/* Logo for mobile */}
-            <motion.div variants={itemVariants} className="lg:hidden text-center mb-8">
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg mx-auto mb-4">
-                <span className="text-3xl font-bold text-white">S</span>
+            {/* Mobile logo */}
+            <motion.div variants={item} className="lg:hidden text-center mb-6">
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 w-14 h-14 rounded-xl flex items-center justify-center shadow-lg mx-auto mb-3">
+                <span className="text-2xl font-bold text-white">S</span>
               </div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-900 to-green-700 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-900 to-green-700 bg-clip-text text-transparent">
                 Skaviyo
               </h2>
             </motion.div>
 
             <motion.h2
-              variants={itemVariants}
-              className="text-3xl font-bold text-center text-gray-900 mb-2"
+              variants={item}
+              className="text-3xl font-bold text-center text-gray-900 mb-1"
             >
               Welcome Back
             </motion.h2>
             <motion.p
-              variants={itemVariants}
-              className="text-center text-gray-600 mb-8"
+              variants={item}
+              className="text-center text-gray-500 text-sm mb-7"
             >
-              Sign in to your account to continue
+              Sign in — your role is detected automatically
             </motion.p>
 
             {/* Error message */}
             {error && (
               <motion.div
-                variants={itemVariants}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-gradient-to-r from-red-100 to-red-50 text-red-700 rounded-xl text-sm font-medium border border-red-200 flex items-center gap-2"
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className="mb-5 p-4 bg-red-50 text-red-700 rounded-xl text-sm font-medium border border-red-200 flex items-center gap-2"
               >
-                <span className="text-lg">⚠️</span>
+                <span className="text-base">⚠️</span>
                 {error}
               </motion.div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email input */}
-              <motion.div variants={itemVariants}>
+              {/* Email */}
+              <motion.div variants={item}>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <EnvelopeSimple
-                    size={20}
-                    color="#013b10ff"
-                    className="absolute left-4 top-3.5 text-emerald-600 pointer-events-none"
-                    weight="duotone"
-                  />
+                  <span className="absolute left-4 top-3.5 pointer-events-none text-emerald-600 text-sm">✉️</span>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@skaviyo.com"
+                    placeholder="Enter your email"
                     required
-                    className="w-full pl-12 pr-4 py-3 bg-white/80 backdrop-blur border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all duration-300 placeholder-gray-400"
+                    autoComplete="email"
+                    className="w-full pl-12 pr-4 py-3 bg-white/80 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all placeholder-gray-400 text-sm"
                   />
                 </div>
               </motion.div>
 
-              {/* Password input */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
+              {/* Password */}
+              <motion.div variants={item}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-gray-700">Password</label>
+                  <span className="text-xs text-emerald-600 font-medium cursor-pointer hover:text-emerald-700 transition">
+                    Forgot password?
+                  </span>
+                </div>
                 <div className="relative">
-                  <LockSimple
-                    size={20}
-                    className="absolute left-4 top-3.5 text-emerald-600 pointer-events-none"
-                    weight="duotone"
-                  />
+                  <span className="absolute left-4 top-3.5 pointer-events-none text-emerald-600 text-sm">🔒</span>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     required
-                    className="w-full pl-12 pr-12 py-3 bg-white/80 backdrop-blur border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all duration-300 placeholder-gray-400"
+                    autoComplete="current-password"
+                    className="w-full pl-12 pr-12 py-3 bg-white/80 border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all placeholder-gray-400 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-3.5 text-emerald-600 hover:text-emerald-700 transition-colors"
+                    className="absolute right-4 top-3.5 text-emerald-600 hover:text-emerald-700 transition text-sm"
                   >
-                    {showPassword ? (
-                      <EyeSlash size={20} weight="duotone" />
-                    ) : (
-                      <Eye size={20} weight="duotone" />
-                    )}
+                    {showPassword ? "🙈" : "👁️"}
                   </button>
                 </div>
               </motion.div>
 
-              {/* Role selector tabs */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Login As
-                </label>
-                <div className="flex gap-3">
-                  <motion.button
-                    type="button"
-                    onClick={() => setRole("ADMIN")}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-                      role === "ADMIN"
-                        ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/50"
-                        : "bg-white/60 border border-emerald-200 text-gray-700 hover:bg-white/80 hover:border-emerald-300"
-                    }`}
-                  >
-                    <span>👑</span>
-                    <span>Admin</span>
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    onClick={() => setRole("VENDOR")}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
-                      role === "VENDOR"
-                        ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/50"
-                        : "bg-white/60 border border-emerald-200 text-gray-700 hover:bg-white/80 hover:border-emerald-300"
-                    }`}
-                  >
-                    <span>🏪</span>
-                    <span>Vendor</span>
-                  </motion.button>
-                </div>
-              </motion.div>
-
-              {/* Login button */}
+              {/* Submit */}
               <motion.button
-                variants={itemVariants}
+                variants={item}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3 rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-emerald-500/50 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3.5 rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all font-semibold text-base shadow-lg hover:shadow-emerald-400/50 disabled:opacity-70 disabled:cursor-not-allowed mt-1"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                     Signing in...
                   </span>
                 ) : (
@@ -300,17 +259,28 @@ const LoginPage = () => {
               </motion.button>
             </form>
 
-            {/* Footer links */}
-            <motion.div variants={itemVariants} className="mt-8 pt-6 border-t border-white/40">
-              <p className="text-center text-sm text-gray-600">
-                Forgot your password?{" "}
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  className="text-emerald-600 font-semibold cursor-pointer hover:text-emerald-700 transition-colors"
-                >
-                  Reset here
-                </motion.span>
+            {/* Hint panel — remove in production */}
+            <motion.div
+              variants={item}
+              className="mt-6 p-4 bg-emerald-50/80 border border-emerald-200 rounded-xl"
+            >
+              <p className="text-xs font-bold text-emerald-800 mb-2 uppercase tracking-wider">
+                🔑 Demo Credentials
               </p>
+              <div className="space-y-1.5 text-xs text-gray-600 font-mono">
+                <div className="flex justify-between">
+                  <span className="text-emerald-700 font-semibold">👑 Admin</span>
+                  <span>admin@skaviyo.com / admin123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-700 font-semibold">🏪 Vendor</span>
+                  <span>vendor@skaviyo.com / vendor123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-700 font-semibold">🛍️ Customer</span>
+                  <span>customer@skaviyo.com / user123</span>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </div>
