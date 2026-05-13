@@ -53,6 +53,9 @@ import RefundPolicyPage         from './customer/pages/RefundPolicyPage';
 import ShippingPolicyPage       from './customer/pages/ShippingPolicyPage';
 import CookiePolicyPage         from './customer/pages/CookiePolicyPage';
 
+// ── Customization Pages ──────────────────────────────────────────────────
+import CustomizationPage        from './pages/CustomizationPage';
+
 function App() {
   return (
     <CartProvider>
@@ -126,6 +129,16 @@ function App() {
             <Route path="/shop/shipping-policy"                   element={<ShippingPolicyPage />} />
             <Route path="/shop/cookie-policy"                     element={<CookiePolicyPage />} />
           </Route>
+
+          {/* ── Customization (role: CUSTOMER) ────────────────────────── */}
+          <Route
+            path="/customization"
+            element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <CustomizationPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ── Catch-all ────────────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />

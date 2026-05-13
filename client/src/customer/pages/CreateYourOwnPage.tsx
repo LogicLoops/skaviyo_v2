@@ -48,10 +48,23 @@ const CreateYourOwnPage = () => {
             choose your print technique, and we'll bring it to life with the same quality as our own collections.
           </p>
           <button
-            onClick={() => navigate('/shop/support')}
+            onClick={() => navigate('/customization')}
             className="mt-8 px-8 py-4 bg-yellow-600 hover:bg-yellow-500 text-teal-900 font-bold rounded-full text-base transition-all duration-300 inline-block"
           >
-            Start Your Design → Contact Us
+            Start Designing Now → Open Canvas Editor
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Start CTA */}
+      <div className="bg-yellow-50 py-8 border-y border-yellow-200">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h3 className="text-lg font-semibold text-teal-900 mb-4">Want to design right now?</h3>
+          <button
+            onClick={() => navigate('/customization')}
+            className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-full transition-all inline-flex items-center gap-2"
+          >
+            <span>🎨</span> Launch Customization Canvas
           </button>
         </div>
       </div>
